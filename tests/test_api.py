@@ -9,7 +9,7 @@ from models import User
 def client():
     # Используем тестовую БД
     app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/test_db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost:5432/test_db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     with app.test_client() as client:
