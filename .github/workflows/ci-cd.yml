@@ -1,4 +1,4 @@
-name: CI/CD
+name: Flask ABAC API Tests
 
 on: [push, pull_request]
 
@@ -11,6 +11,7 @@ jobs:
         image: postgres:13
         env:
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -29,7 +30,8 @@ jobs:
     
     - name: Install dependencies
       run: |
-        pip install -r requirements.txt
+        python -m pip install --upgrade pip
+        pip install flask flask_sqlalchemy psycopg2-binary pytest bandit
     
     - name: Run tests
       env:
@@ -39,5 +41,4 @@ jobs:
     
     - name: Security check with bandit
       run: |
-        pip install bandit
         bandit -r . -ll
