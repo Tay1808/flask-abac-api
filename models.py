@@ -29,6 +29,6 @@ class Policy(db.Model):
     __tablename__ = 'policies'
     
     id = db.Column(db.Integer, primary_key=True)
-    attribute = db.Column(db.String(100), nullable=False)
-    operator = db.Column(db.String(20), nullable=False)
-    value = db.Column(db.String(200), nullable=False)
+    attribute = db.Column(db.String(50), nullable=False)  # user.subscription_level, resource.access_level
+    operator = db.Column(db.String(10), nullable=False)   # ==, !=, <, >, <=, >=
+    value = db.Column(db.String(100), nullable=False)     # premium, basic, active
