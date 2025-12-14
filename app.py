@@ -228,164 +228,267 @@ HTML_TEMPLATE = '''
         </div>
     </div>
     
-    <script>
-    async function registerUser() {
-        const output = document.getElementById('register-output');
-        output.textContent = 'Выполняю запрос...';
-        
-        const username = document.getElementById('reg-username').value;
-        const password = document.getElementById('reg-password').value;
-        const subscription = document.getElementById('reg-subscription').value;
-        const status = document.getElementById('reg-status').value;
-        
-        if (!username || !password) {
-            output.textContent = 'Ошибка: Заполните все поля';
-            return;
-        }
-        
-        try {
-            const response = await fetch('/register', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    username: username,
-                    password: password,
-                    subscription_level: subscription,
-                    account_status: status
-                })
-            });
-            
-            const data = await response.json();
-            output.textContent = JSON.stringify(data, null, 2);
-            
-        } catch (error) {
-            output.textContent = 'Ошибка: ' + error.message;
-        }
+<script>
+async function registerUser() {
+    const output = document.getElementById('register-output');
+    output.textContent = 'Выполняю запрос...';
+    output.className = 'output info';
+    
+    const username = document.getElementById('reg-username').value;
+    const password = document.getElementById('reg-password').value;
+    const subscription = document.getElementById('reg-subscription').value;
+    const status = document.getElementById('reg-status').value;
+    
+    if (!username || !password) {
+        output.textContent = 'Ошибка: Заполните все поля';
+        output.className = 'output error';
+        return;
     }
     
-    async function loginUser() {
-        const output = document.getElementById('login-output');
-        output.textContent = 'Выполняю запрос...';
+    try {
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                username: username,
+                password: password,
+                subscription_level: subscription,
+                account_status: status
+            })
+        });
         
-        const username = document.getElementById('login-username').value;
-        const password = document.getElementById('login-password').value;
+        const contentType = response.headers.get('content-type');
         
-        if (!username || !password) {
-            output.textContent = 'Ошибка: Заполните все поля';
-            return;
+        if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            
+            if (response.status === 201 && data.user_id) {
+                output.textContent = `Вы успешно зарегистрировались! ID: ${data.user_id}, Имя: ${username}`;
+                output.className = 'output success';
+            } else {
+                output.textContent = `Ошибка: ${data.error || 'Неизвестная ошибка'}`;
+                output.className = 'output error';
+            }
+        } else {
+            const text = await response.text();
+            output.textContent = `Ошибка сервера: ${response.status} ${response.statusText}`;
+            output.className = 'output error';
         }
         
-        try {
-            const response = await fetch('/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    username: username,
-                    password: password
-                })
-            });
-            
+    } catch (error) {
+        output.textContent = 'Ошибка подключения к серверу';
+        output.className = 'output error';
+    }
+}
+
+async function loginUser() {
+    const output = document.getElementById('login-output');
+    output.textContent = 'Выполняю запрос...';
+    output.className = 'output info';
+    
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+    
+    if (!username || !password) {
+        output.textContent = 'Ошибка: Заполните все поля';
+        output.className = 'output error';
+        return;
+    }
+    
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+        });
+        
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
             const data = await response.json();
-            output.textContent = JSON.stringify(data, null, 2);
             
-            if (data.user_id) {
+            if (response.status === 200 && data.user_id) {
+                output.textContent = `Вход выполнен! Ваш ID: ${data.user_id}`;
+                output.className = 'output success';
+                
                 document.getElementById('resource-user-id').value = data.user_id;
                 document.getElementById('get-user-id').value = data.user_id;
                 document.getElementById('get-one-user-id').value = data.user_id;
+            } else {
+                output.textContent = `Ошибка: ${data.error || 'Неверные учетные данные'}`;
+                output.className = 'output error';
             }
-            
-        } catch (error) {
-            output.textContent = 'Ошибка: ' + error.message;
+        } else {
+            const text = await response.text();
+            output.textContent = `Ошибка сервера: ${response.status} ${response.statusText}`;
+            output.className = 'output error';
         }
+        
+    } catch (error) {
+        output.textContent = 'Ошибка подключения к серверу';
+        output.className = 'output error';
+    }
+}
+
+async function createResource() {
+    const output = document.getElementById('create-resource-output');
+    output.textContent = 'Выполняю запрос...';
+    output.className = 'output info';
+    
+    const userId = document.getElementById('resource-user-id').value;
+    const name = document.getElementById('resource-name').value;
+    const access = document.getElementById('resource-access').value;
+    const hours = document.getElementById('resource-hours').value;
+    
+    if (!userId || !name || !hours) {
+        output.textContent = 'Ошибка: Заполните все поля';
+        output.className = 'output error';
+        return;
     }
     
-    async function createResource() {
-        const output = document.getElementById('create-resource-output');
-        output.textContent = 'Выполняю запрос...';
+    try {
+        const response = await fetch('/resources', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-User-ID': userId
+            },
+            body: JSON.stringify({
+                name: name,
+                access_level: access,
+                available_hours: hours
+            })
+        });
         
-        const userId = document.getElementById('resource-user-id').value;
-        const name = document.getElementById('resource-name').value;
-        const access = document.getElementById('resource-access').value;
-        const hours = document.getElementById('resource-hours').value;
+        const contentType = response.headers.get('content-type');
         
-        if (!userId || !name || !hours) {
-            output.textContent = 'Ошибка: Заполните все поля';
-            return;
-        }
-        
-        try {
-            const response = await fetch('/resources', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-User-ID': userId
-                },
-                body: JSON.stringify({
-                    name: name,
-                    access_level: access,
-                    available_hours: hours
-                })
-            });
-            
+        if (contentType && contentType.includes('application/json')) {
             const data = await response.json();
-            output.textContent = JSON.stringify(data, null, 2);
             
-        } catch (error) {
-            output.textContent = 'Ошибка: ' + error.message;
+            if (response.status === 201 && data.resource_id) {
+                output.textContent = `Ресурс создан! ID: ${data.resource_id}, Название: ${name}`;
+                output.className = 'output success';
+            } else {
+                output.textContent = `Ошибка: ${data.error || 'Требуется премиум подписка'}`;
+                output.className = 'output error';
+            }
+        } else {
+            const text = await response.text();
+            output.textContent = `Ошибка сервера: ${response.status} ${response.statusText}`;
+            output.className = 'output error';
         }
+        
+    } catch (error) {
+        output.textContent = 'Ошибка подключения к серверу';
+        output.className = 'output error';
+    }
+}
+
+async function getResources() {
+    const output = document.getElementById('get-resources-output');
+    output.textContent = 'Загружаю ресурсы...';
+    output.className = 'output info';
+    
+    const userId = document.getElementById('get-user-id').value;
+    
+    if (!userId) {
+        output.textContent = 'Ошибка: Введите user_id';
+        output.className = 'output error';
+        return;
     }
     
-    async function getResources() {
-        const output = document.getElementById('get-resources-output');
-        output.textContent = 'Выполняю запрос...';
+    try {
+        const response = await fetch('/resources', {
+            method: 'GET',
+            headers: {'X-User-ID': userId}
+        });
         
-        const userId = document.getElementById('get-user-id').value;
+        const contentType = response.headers.get('content-type');
         
-        if (!userId) {
-            output.textContent = 'Ошибка: Введите user_id';
-            return;
-        }
-        
-        try {
-            const response = await fetch('/resources', {
-                method: 'GET',
-                headers: {'X-User-ID': userId}
-            });
-            
+        if (contentType && contentType.includes('application/json')) {
             const data = await response.json();
-            output.textContent = JSON.stringify(data, null, 2);
             
-        } catch (error) {
-            output.textContent = 'Ошибка: ' + error.message;
+            if (response.status === 200) {
+                if (data.resources && data.resources.length > 0) {
+                    let result = `Найдено ресурсов: ${data.resources.length}\n\n`;
+                    data.resources.forEach(resource => {
+                        result += `ID: ${resource.id}, Название: ${resource.name}\n`;
+                    });
+                    output.textContent = result;
+                    output.className = 'output success';
+                } else {
+                    output.textContent = 'Ресурсов не найдено';
+                    output.className = 'output info';
+                }
+            } else {
+                output.textContent = `Ошибка: ${data.error || 'Требуется аутентификация'}`;
+                output.className = 'output error';
+            }
+        } else {
+            const text = await response.text();
+            output.textContent = `Ошибка сервера: ${response.status} ${response.statusText}`;
+            output.className = 'output error';
         }
+        
+    } catch (error) {
+        output.textContent = 'Ошибка подключения к серверу';
+        output.className = 'output error';
+    }
+}
+
+async function getResource() {
+    const output = document.getElementById('get-resource-output');
+    output.textContent = 'Загружаю ресурс...';
+    output.className = 'output info';
+    
+    const userId = document.getElementById('get-one-user-id').value;
+    const resourceId = document.getElementById('resource-id').value;
+    
+    if (!userId || !resourceId) {
+        output.textContent = 'Ошибка: Заполните все поля';
+        output.className = 'output error';
+        return;
     }
     
-    async function getResource() {
-        const output = document.getElementById('get-resource-output');
-        output.textContent = 'Выполняю запрос...';
+    try {
+        const response = await fetch('/resources/' + resourceId, {
+            method: 'GET',
+            headers: {'X-User-ID': userId}
+        });
         
-        const userId = document.getElementById('get-one-user-id').value;
-        const resourceId = document.getElementById('resource-id').value;
+        const contentType = response.headers.get('content-type');
         
-        if (!userId || !resourceId) {
-            output.textContent = 'Ошибка: Заполните все поля';
-            return;
-        }
-        
-        try {
-            const response = await fetch('/resources/' + resourceId, {
-                method: 'GET',
-                headers: {'X-User-ID': userId}
-            });
-            
+        if (contentType && contentType.includes('application/json')) {
             const data = await response.json();
-            output.textContent = JSON.stringify(data, null, 2);
             
-        } catch (error) {
-            output.textContent = 'Ошибка: ' + error.message;
+            if (response.status === 200) {
+                output.textContent = `Ресурс найден! ID: ${data.id}, Название: ${data.name}`;
+                output.className = 'output success';
+            } else if (response.status === 404) {
+                output.textContent = 'Ресурс не найден';
+                output.className = 'output error';
+            } else if (response.status === 403) {
+                output.textContent = 'Доступ запрещен';
+                output.className = 'output error';
+            } else {
+                output.textContent = `Ошибка: ${data.error || 'Неизвестная ошибка'}`;
+                output.className = 'output error';
+            }
+        } else {
+            const text = await response.text();
+            output.textContent = `Ошибка сервера: ${response.status} ${response.statusText}`;
+            output.className = 'output error';
         }
+        
+    } catch (error) {
+        output.textContent = 'Ошибка подключения к серверу';
+        output.className = 'output error';
     }
-    </script>
+}
+</script>
 </body>
 </html>
 '''
